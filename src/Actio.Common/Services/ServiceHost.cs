@@ -5,6 +5,7 @@ using Actio.Common.RabbitMq;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using RawRabbit;
 
 namespace Actio.Common.Services
@@ -75,18 +76,23 @@ namespace Actio.Common.Services
 
             public BusBuilder SubscribeToCommand<TCommand>() where TCommand : ICommand
             {
-                var handler = (ICommandHandler<TCommand>)_webHost.Services
-                    .GetService(typeof(ICommandHandler<TCommand>));
-                _bus.WithCommandHandlerAsync(handler);
-
+                using (var serviceScope = _webHost.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    var handler = (ICommandHandler<TCommand>)serviceScope.ServiceProvider
+                        .GetService(typeof(ICommandHandler<TCommand>));
+                    _bus.WithCommandHandlerAsync(handler);
+                }
                 return this;
             }
 
             public BusBuilder SubscribeToEvent<TEvent>() where TEvent : IEvent
             {
-                var handler = (IEventHandler<TEvent>)_webHost.Services
-                    .GetService(typeof(IEventHandler<TEvent>));
-                _bus.WithEventHandlerAsync(handler);
+                using (var serviceScope = _webHost.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    var handler = (IEventHandler<TEvent>)serviceScope.ServiceProvider
+                        .GetService(typeof(IEventHandler<TEvent>));
+                    _bus.WithEventHandlerAsync(handler);
+                }
 
                 return this;
             }
