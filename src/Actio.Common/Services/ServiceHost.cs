@@ -6,7 +6,6 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using RawRabbit;
-using static Actio.Common.Services.ServiceHost;
 
 namespace Actio.Common.Services
 {
@@ -31,41 +30,42 @@ namespace Actio.Common.Services
             var webHostBuilder = WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(config)
                 .UseStartup<TStartup>();
-            
+
             return new HostBuilder(webHostBuilder.Build());
         }
 
-        public abstract class BuilderBase
+        public abstract class BuilderBase 
         {
             public abstract ServiceHost Build();
         }
-    }
 
-    public class HostBuilder : BuilderBase
-    {
-        private readonly IWebHost _webHost;
-        private IBusClient _bus;
-
-        public HostBuilder(IWebHost webHost)
+        public class HostBuilder : BuilderBase
         {
-            _webHost = webHost;
-        }
+            private readonly IWebHost _webHost;
+            private IBusClient _bus;
 
-        public BusBuilder UseRabbitMq()
-        {
-            _bus = (IBusClient)_webHost.Services.GetService(typeof(IBusClient));
-            return new BusBuilder(_webHost, _bus);
-        }
+            public HostBuilder(IWebHost webHost)
+            {
+                _webHost = webHost;
+            }
 
-        public override ServiceHost Build()
-        {
-            return new ServiceHost(_webHost);
+            public BusBuilder UseRabbitMq()
+            {
+                _bus = (IBusClient)_webHost.Services.GetService(typeof(IBusClient));
+
+                return new BusBuilder(_webHost, _bus);
+            }
+
+            public override ServiceHost Build()
+            {
+                return new ServiceHost(_webHost);
+            }
         }
 
         public class BusBuilder : BuilderBase
         {
             private readonly IWebHost _webHost;
-            private IBusClient _bus;
+            private IBusClient _bus; 
 
             public BusBuilder(IWebHost webHost, IBusClient bus)
             {
@@ -73,7 +73,7 @@ namespace Actio.Common.Services
                 _bus = bus;
             }
 
-            public BusBuilder SubscribeToCommand<TCommand>() where TCommand : ICommand 
+            public BusBuilder SubscribeToCommand<TCommand>() where TCommand : ICommand
             {
                 var handler = (ICommandHandler<TCommand>)_webHost.Services
                     .GetService(typeof(ICommandHandler<TCommand>));
@@ -82,7 +82,7 @@ namespace Actio.Common.Services
                 return this;
             }
 
-            public BusBuilder SubscribeToEvent<TEvent>() where TEvent : IEvent 
+            public BusBuilder SubscribeToEvent<TEvent>() where TEvent : IEvent
             {
                 var handler = (IEventHandler<TEvent>)_webHost.Services
                     .GetService(typeof(IEventHandler<TEvent>));
